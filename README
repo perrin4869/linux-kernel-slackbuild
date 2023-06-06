@@ -1,0 +1,8 @@
+Check the signature of the kernel source:
+
+  gpg2 --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
+  xz -cd linux-$VERSION.tar.xz | gpg2 --verify linux-$VERSION.tar.sign -
+
+Update the bootloader (in the case of grub):
+
+  grub-mkconfig -o /boot/grub/grub.cfg
