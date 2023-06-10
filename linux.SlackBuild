@@ -118,7 +118,8 @@ cp System.map $PKG/boot/System.map-"$VERSION_TAGGED"
 mkdir -p $PKG/install
 cat $CWD/slack-desc > $PKG/install/slack-desc
 cat <<EOF > $PKG/install/doinst.sh
-$(/usr/share/mkinitrd/mkinitrd_command_generator.sh -k $VERSION_TAGGED -r | sed "s/initrd.gz/initrd-$VERSION_TAGGED.gz/g")
+VERSION=$VERSION_TAGGED
+\$(/usr/share/mkinitrd/mkinitrd_command_generator.sh -k \$VERSION -r | sed "s/initrd.gz/initrd-\$VERSION.gz/g")
 EOF
 cat <<EOF > $PKG/install/douninst.sh
 rm -f /boot/initrd-$VERSION_TAGGED.gz
