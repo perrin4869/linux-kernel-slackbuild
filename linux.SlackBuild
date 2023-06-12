@@ -68,7 +68,7 @@ fi
 # If your oldconfig was builded by u and your old kernel`s name is taged by you asume: "6.0.13-tag"
 # then add your TAG in VERSION_TAGGED. Example VERSION_TAGGED=6.0.14-TAG else script will fail using oldconfig.
 VERSION_TAGGED=${VERSION_TAGGED:-${VERSION/-rc/.0-rc}}
-JOBS=-j$(getconf _NPROCESSORS_ONLN)
+NJOBS=${NJOBS:-$(nproc)}
 
 set -e
 
@@ -99,8 +99,9 @@ mkdir -p $PKG/usr/src
 cp -r ../$PRGNAM-$VERSION $PKG/usr/src
 
 make oldconfig
-make "$JOBS"
+make -j$NJOBS
 make modules_install INSTALL_MOD_PATH=$PKG
+make headers_install INSTALL_HDR_PATH=$PKG/usr
 
 # override the build and source symlinks to match the source in the package
 rm $PKG/lib/modules/$VERSION_TAGGED/build
