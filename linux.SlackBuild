@@ -26,7 +26,7 @@ cd $(dirname $0) ; CWD=$(pwd)
 
 PRGNAM=linux
 # VERSION=${VERSION:-6.6-rc1}
-VERSION=${VERSION:-6.5.2}
+VERSION=${VERSION:-6.5.3}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_perrin4869}
 PKGTYPE=${PKGTYPE:-tgz}
