@@ -25,8 +25,8 @@
 cd $(dirname $0) ; CWD=$(pwd)
 
 PRGNAM=linux
-# VERSION=${VERSION:-6.6-rc1}
-VERSION=${VERSION:-6.5.3}
+VERSION=${VERSION:-6.6-rc3}
+# VERSION=${VERSION:-6.5.5}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_perrin4869}
 PKGTYPE=${PKGTYPE:-tgz}
@@ -108,9 +108,13 @@ make headers_install INSTALL_HDR_PATH=$PKG/usr
 
 # override the build and source symlinks to match the source in the package
 rm $PKG/lib/modules/$VERSION_TAGGED/build
-rm -f $PKG/lib/modules/$VERSION_TAGGED/source # 6.6-rc1 doesn't seem to install a sources symlink, so use -f to ignore errors
-ln -sf /usr/src/linux-$VERSION $PKG/lib/modules/$VERSION_TAGGED/build
+  ln -sf /usr/src/linux-$VERSION $PKG/lib/modules/$VERSION_TAGGED/build
+
+# 6.6-rc1 doesn't seem to install a sources symlink, so use -f to ignore errors
+if [[ -h "$PKG/lib/modules/$VERSION_TAGGED/source" ]]; then
+  rm $PKG/lib/modules/$VERSION_TAGGED/source
 ln -sf /usr/src/linux-$VERSION $PKG/lib/modules/$VERSION_TAGGED/source
+fi
 
 mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
 cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
