@@ -134,7 +134,20 @@ fi
 make CC="$CC" oldconfig
 make CC="$CC" -j$NJOBS
 make CC="$CC" modules_install INSTALL_MOD_PATH=$PKG
-make CC="$CC" headers_install INSTALL_HDR_PATH=$PKG/usr
+
+# Deliberately not running "make headers_install" into $PKG/usr: that writes
+# sanitized UAPI headers to /usr/include/{asm,linux,...}, the same paths
+# Slackware's own kernel-headers-<ver> package owns. Two packages claiming
+# the same files means removepkg on either one deletes files the other still
+# expects, and since kernel-headers is meant to track your *primary* kernel
+# (whatever userspace/glibc was built against), a side/test kernel package
+# has no business overwriting or removing it. Confirmed by inspecting
+# Slackware-current's own kernel-source package: it owns files only under
+# /usr/src, zero files under /usr/include -- that split is intentional.
+# Out-of-tree/DKMS module builds don't need this either; they build against
+# /usr/src/linux-$VERSION via the /lib/modules/.../build symlink below, not
+# against /usr/include.
+# make CC="$CC" headers_install INSTALL_HDR_PATH=$PKG/usr
 
 # Grab these before "make clean" below removes them.
 mkdir $PKG/boot
