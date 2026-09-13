@@ -99,13 +99,29 @@ else
   zcat /proc/config.gz > .config
 fi
 
-mkdir -p $PKG/usr/src
-cp -r ../$PRGNAM-$VERSION $PKG/usr/src
-
 make oldconfig
 make -j$NJOBS
 make modules_install INSTALL_MOD_PATH=$PKG
 make headers_install INSTALL_HDR_PATH=$PKG/usr
+
+# Grab these before "make clean" below removes them.
+mkdir $PKG/boot
+cp arch/x86_64/boot/bzImage $PKG/boot/vmlinuz-"$VERSION_TAGGED"
+cp System.map $PKG/boot/System.map-"$VERSION_TAGGED"
+
+# Trim the built tree down before packaging it as /usr/src: "make clean" is
+# documented to "remove most generated files but keep the config and enough
+# build support to build external modules" (make help), i.e. it drops the
+# .o/.ko/vmlinux build products but keeps .config, Module.symvers,
+# include/generated/*, etc. Without this, the packaged /usr/src tree used
+# to be a snapshot of the *pre-build* source (copied before "make oldconfig"
+# ran), missing everything needed to build an out-of-tree/DKMS module
+# against it later -- Slackware's own kernel-source packages ship these
+# files pre-baked for the same reason.
+make clean
+
+mkdir -p $PKG/usr/src
+cp -r ../$PRGNAM-$VERSION $PKG/usr/src
 
 # override the build and source symlinks to match the source in the package
 rm $PKG/lib/modules/$VERSION_TAGGED/build
@@ -119,10 +135,6 @@ fi
 
 mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
 cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
-
-mkdir $PKG/boot
-cp arch/x86_64/boot/bzImage $PKG/boot/vmlinuz-"$VERSION_TAGGED"
-cp System.map $PKG/boot/System.map-"$VERSION_TAGGED"
 
 mkdir -p $PKG/install
 cat $CWD/slack-desc > $PKG/install/slack-desc
