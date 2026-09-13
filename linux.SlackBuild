@@ -25,8 +25,8 @@
 cd $(dirname $0) ; CWD=$(pwd)
 
 PRGNAM=linux
-VERSION=${VERSION:-6.10-rc2}
-# VERSION=${VERSION:-6.9.3}
+# VERSION=${VERSION:-6.10-rc2}
+VERSION=${VERSION:-6.6.62}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_perrin4869}
 PKGTYPE=${PKGTYPE:-tgz}
@@ -123,7 +123,8 @@ find -L . \
  \( -perm 666 -o -perm 664 -o -perm 640 -o -perm 600 -o -perm 444 \
   -o -perm 440 -o -perm 400 \) -exec chmod 644 {} \;
 
-CONFIG_FILE=config-$(echo "$VERSION" | cut -d. -f1,2)
+VERSION_SERIES=$(echo "$VERSION" | cut -d. -f1,2)
+CONFIG_FILE=config-$VERSION_SERIES
 if [[ -e "$CWD/$CONFIG_FILE" ]]; then
   cp $CWD/$CONFIG_FILE .config
 else
@@ -178,4 +179,4 @@ rm -f /boot/initrd-$VERSION_TAGGED.gz
 EOF
 
 cd $PKG
-/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-${VERSION_TAGGED/-/_}-$ARCH-$BUILD$TAG.$PKGTYPE
+/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM${VERSION_SERIES}-${VERSION_TAGGED/-/_}-$ARCH-$BUILD$TAG.$PKGTYPE
