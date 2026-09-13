@@ -73,6 +73,37 @@ if [[ $VERSION_TAGGED =~ ^[0-9]+\.[0-9]+$ ]]; then
 fi
 NJOBS=${NJOBS:-$(nproc)}
 
+CC=${CC:-gcc}
+
+# Newer GCC (16+) defaults to a C standard (C23) where bool/true/false are
+# reserved keywords, colliding with kernel code (pre-C23 vintage) that still
+# hand-defines them itself (typedef _Bool bool; enum { false, true }; see
+# include/linux/stddef.h/types.h). The main kernel build pins -std=gnu11
+# explicitly (KBUILD_CFLAGS) and is unaffected, but several long-standing
+# "freestanding" sub-builds define their own from-scratch CFLAGS that don't
+# inherit that pin at all -- the 16-bit realmode trampoline
+# (arch/x86/realmode/) and the EFI boot stub (drivers/firmware/efi/libstub/)
+# are two found so far, and there could be others not yet discovered.
+# Fixing it via $CC itself instead of patching each such Makefile covers all
+# of them in one place, since none of these sub-Makefiles override CC
+# itself, only the flags passed alongside it.
+#
+# Fixed upstream in Linux 7.1 (commit ec4c28276c14, "kbuild: Consolidate C
+# dialect options" by Nathan Chancellor), which introduced CC_FLAGS_DIALECT
+# and threaded it into REALMODE_CFLAGS and other arch Makefiles. Not
+# backported to any earlier stable branch. Slackware's own kernel-source
+# package for the still-pre-7.1 6.18.x series instead patches -std=gnu11
+# directly into REALMODE_CFLAGS and the efi-stub's cflags-$(CONFIG_X86) --
+# i.e. the same whack-a-mole, one-Makefile-at-a-time approach this comment
+# is deliberately avoiding.
+#
+# Detect whether this is actually necessary, rather than assuming a GCC
+# version cutoff, by checking what standard this compiler defaults to.
+GCC_DEFAULT_STDC=$(echo | $CC -dM -E - 2>/dev/null | sed -n 's/^#define __STDC_VERSION__ \([0-9]*\).*/\1/p')
+if [ -n "$GCC_DEFAULT_STDC" ] && [ "$GCC_DEFAULT_STDC" -ge 202311 ]; then
+  CC="$CC -std=gnu11"
+fi
+
 set -e
 
 rm -rf $PKG
@@ -99,10 +130,10 @@ else
   zcat /proc/config.gz > .config
 fi
 
-make oldconfig
-make -j$NJOBS
-make modules_install INSTALL_MOD_PATH=$PKG
-make headers_install INSTALL_HDR_PATH=$PKG/usr
+make CC="$CC" oldconfig
+make CC="$CC" -j$NJOBS
+make CC="$CC" modules_install INSTALL_MOD_PATH=$PKG
+make CC="$CC" headers_install INSTALL_HDR_PATH=$PKG/usr
 
 # Grab these before "make clean" below removes them.
 mkdir $PKG/boot
@@ -118,7 +149,7 @@ cp System.map $PKG/boot/System.map-"$VERSION_TAGGED"
 # ran), missing everything needed to build an out-of-tree/DKMS module
 # against it later -- Slackware's own kernel-source packages ship these
 # files pre-baked for the same reason.
-make clean
+make CC="$CC" clean
 
 mkdir -p $PKG/usr/src
 cp -r ../$PRGNAM-$VERSION $PKG/usr/src
