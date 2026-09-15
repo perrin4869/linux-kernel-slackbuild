@@ -131,6 +131,19 @@ else
   zcat /proc/config.gz > .config
 fi
 
+# Force CONFIG_LOCALVERSION to match whatever suffix VERSION_TAGGED carries
+# beyond VERSION, so the built kernel's own self-identification (uname -r)
+# can never drift from what this script names its package/files as -- no
+# matter what .config was used as a starting point (e.g. after regenerating
+# it from extract-ikconfig, which silently wipes out any hand-edited
+# CONFIG_LOCALVERSION from a previous run). For a normal build with no
+# VERSION_TAGGED override, VERSION_TAGGED already equals VERSION, so this
+# resolves to an empty suffix -- unchanged behavior.
+# Caveat: doesn't handle the default -rc VERSION_TAGGED transform (adds
+# ".0" before "-rcN"), since that's not a literal prefix match; only matters
+# for -rc builds, which don't otherwise set VERSION_TAGGED explicitly.
+./scripts/config --set-str LOCALVERSION "${VERSION_TAGGED#$VERSION}"
+
 make CC="$CC" oldconfig
 make CC="$CC" -j$NJOBS
 make CC="$CC" modules_install INSTALL_MOD_PATH=$PKG
