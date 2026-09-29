@@ -178,17 +178,19 @@ cp System.map $PKG/boot/System.map-"$VERSION_TAGGED"
 # files pre-baked for the same reason.
 make CC="$CC" clean
 
+# Named by the tagged release: DKMS builds against this tree take its release
+# string as their vermagic, and it must not collide with the official kernel-source tree.
 mkdir -p $PKG/usr/src
-cp -r ../$PRGNAM-$VERSION $PKG/usr/src
+cp -r ../$PRGNAM-$VERSION $PKG/usr/src/linux-$VERSION_TAGGED
 
 # override the build and source symlinks to match the source in the package
 rm $PKG/lib/modules/$VERSION_TAGGED/build
-  ln -sf /usr/src/linux-$VERSION $PKG/lib/modules/$VERSION_TAGGED/build
+  ln -sf /usr/src/linux-$VERSION_TAGGED $PKG/lib/modules/$VERSION_TAGGED/build
 
 # 6.6-rc1 doesn't seem to install a sources symlink, so use -f to ignore errors
 if [[ -h "$PKG/lib/modules/$VERSION_TAGGED/source" ]]; then
   rm $PKG/lib/modules/$VERSION_TAGGED/source
-ln -sf /usr/src/linux-$VERSION $PKG/lib/modules/$VERSION_TAGGED/source
+ln -sf /usr/src/linux-$VERSION_TAGGED $PKG/lib/modules/$VERSION_TAGGED/source
 fi
 
 mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
