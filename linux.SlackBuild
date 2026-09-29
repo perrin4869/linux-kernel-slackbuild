@@ -123,6 +123,12 @@ find -L . \
  \( -perm 666 -o -perm 664 -o -perm 640 -o -perm 600 -o -perm 444 \
   -o -perm 440 -o -perm 400 \) -exec chmod 644 {} \;
 
+for p in ${PATCHES:-}; do
+  [[ "$p" = /* ]] || p="$CWD/$p"
+  echo "applying patch: $p"
+  patch -p1 < "$p"
+done
+
 VERSION_SERIES=$(echo "$VERSION" | cut -d. -f1,2)
 CONFIG_FILE=config-$VERSION_SERIES
 if [[ -e "$CWD/$CONFIG_FILE" ]]; then
